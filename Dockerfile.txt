@@ -1,0 +1,20 @@
+# Используем официальный образ PHP
+FROM php:8.2-apache
+
+# Устанавливаем Composer
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+
+# Копируем код проекта
+COPY . /var/www/html
+
+# Устанавливаем зависимости
+RUN cd /var/www/html && composer install
+
+# Включаем модуль mbstring (обязательно для Morphos)
+RUN docker-php-ext-install mbstring
+
+# Запускаем Apache (он слушает порт 80)
+EXPOSE 80
+
+# Команда запуска (можно оставить по умолчанию)
+CMD ["apache2-foreground"]
