@@ -1,16 +1,36 @@
 <?php
+
+// Подключаем автозагрузчик Composer
 require __DIR__ . '/../vendor/autoload.php';
+
 use morphos\Russian;
 
+// Устанавливаем кодировку ответа
 header('Content-Type: text/plain; charset=utf-8');
 
-$name = $_GET['name'] ?? '';
-$case = $_GET['case'] ?? 'именительный';
+// Получаем параметры из запроса
+$name = trim($_GET['name'] ?? '');
+$case = trim($_GET['case'] ?? 'именительный');
 
-if (!$name) {
+// Проверка наличия имени
+if ($name === '') {
     http_response_code(400);
-    echo "Error: missing 'name' parameter";
+    echo "Error: parameter 'name' is required";
     exit;
 }
 
-echo Russian\inflectName($name, $case);
+// Определяем тип: если содержит только одно слово — геоназвание, иначе — ФИО
+if (strpos($name, ' ') === false && !preg_match('/[а-яё]/iu', $name) === false) {
+    // Одно слово → считаем географическим названием
+    try {
+        $result = Russian\GeographicalNamesInflection::getCase($name, $case);
+    } catch (Exception $e) {
+        // Если не получилось — пробуем как имя
+        $result = Russian\inflectName($name, $case);
+    }
+} else {
+    // Несколько слов → ФИО
+    $result = Russian\inflectName($name, $case);
+}
+
+echo $result;
